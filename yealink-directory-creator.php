@@ -4,6 +4,14 @@
 // Header: Set our variables/constants/etc
 ###################################################
 
+/**
+*
+*		Yealink Directory Creator by Brent Nesbit
+*		Details: https://github.com/nesb0t/yealink-directory-creator
+*		Version 3.1.1 -- Last updated: 2016-10-10
+*
+**/
+
 date_default_timezone_set('America/New_York');				// Not required, but usually a good idea in php
 
 define("SERVER", "nms.example.com");						// Base URL to your nms server. No https or trailing slashes.
@@ -13,6 +21,7 @@ define("CLIENTID", "Example_API_User");						// API key client ID
 define("CLIENTSECRET", "ExampleKey123");					// API key secret key
 
 define("DIRECTORYLOCATION", "/var/www/html/example/");		// Absolute path to folder where directories will be stored. INCLUDE TRAILING SLASH.
+define("SRV_CODE", "example-service-code");					// See README for details. If you want to limit results to a certain service code, enter the service code here. If you do not want to limit to service codes then comment this line out.
 
 # $startTime = __pageLoadTimer();				// Track script load/processing time. See comments in the function definition at the bottom of this file.
 												// Must uncomment here and in footer at the bottom to use it.
@@ -84,7 +93,8 @@ foreach ($domainArray as $key => $domain) {								// Loop through each item (do
 	# echo "Domain: $domain.<br>";										// Uncomment for basic debugging
 
 	set_time_limit(30);  												// Prevent PHP timeout while building the directories. Sets it to 30 seconds at the beginning of each loop.
-
+	
+	$userCount = "";     												// Blank out our user count at the start of each loop
 	$userList = "";     												// Blank out our user list at the start of each loop
 
 	$userList .= '<?xml version="1.0" encoding="ISO-8859-1"?>'."\n";    // This is the XML header, required by Yealink for the directory
@@ -106,8 +116,17 @@ foreach ($domainArray as $key => $domain) {								// Loop through each item (do
 	$subscribers = simplexml_load_string($subscribers);   								// Load the XML response from the API
 
 	foreach($subscribers->subscriber as $key => $value) {								// Take each subscriber (user) found for this domain, one subscriber at a time
-			if(isset($value->srv_code) && $value->srv_code == 'active-user'){			// *!* SEE NOTE IN README *!* Check to see if they are set as an "active-user" -- Don't add them if they aren't. 
-				if($value->dir_list == 'yes'){											// Check to see if they are shown in the portal directory -- Don't add them if they are hidden.
+			
+			if (!defined('SRV_CODE') || SRV_CODE == NULL) {								// Check if we want to limit results to a certain service code by seeing if it exists at all, or if it exists but isn't set. See README and header for details.
+		 		# echo "$domain: SRV_CODE is not being checked.<br>"; 					// Uncomment for basic debugging
+				goto SKIP_SRV_CHECK;													// Skip next "if" statement by jumping over it if we don't want to limit results to service codes. As always, there is a relevant XKCD: http://xkcd.com/292/ . 
+			}
+			
+			if(isset($value->srv_code) && $value->srv_code == SRV_CODE){				// Check to see if the service code matches what we set in SRV_CODE -- Don't add them if they aren't. See README for details.
+				SKIP_SRV_CHECK: 														// Jumps to here if we aren't checking the service code, skipping the above if statement.
+		
+		if($value->dir_list == 'yes'){													// Check to see if they are shown in the portal directory -- Don't add them if they are hidden.
+					$userCount++;														// Count how many users we add so we don't write empty directories
 					$userList .= '<DirectoryEntry>'."\n";													// More Yealink XML
 					$userList .= '<Name>' . $value->first_name . " " . $value->last_name ."</Name> \n";		// Add first name and last name to the directory
 					$userList .= '<Telephone>' . $value->user . "</Telephone> \n";							// Add the telephone number to the directory
@@ -120,16 +139,22 @@ foreach ($domainArray as $key => $domain) {								// Loop through each item (do
 ###################################################
 // Step 4: Save directory to a file
 ###################################################
-
-	$saveDirectory = fopen(DIRECTORYLOCATION . $domain . ".xml", "w");							// Open location to save to. It always overwrites the whole file.
+	if ($userCount > 0) {																			// Only write the directory if there are actually users in it
+		# echo "Found $userCount user(s) for domain $domain <br>";									// Uncomment for basic debugging
+		$saveDirectory = fopen(DIRECTORYLOCATION . $domain . ".xml", "w");							// Open location to save to. It always overwrites the whole file.
 	
-	if (fwrite($saveDirectory, $userList) === FALSE) {											// Write the file, and check if failed to save
-		# echo "Failed to write to file: " . DIRECTORYLOCATION . $domain . ".xml <br>";			// Uncomment for basic debugging
+		if (fwrite($saveDirectory, $userList) === FALSE) {											// Write the file, and check if failed to save
+			# echo "Failed to write to file: " . DIRECTORYLOCATION . $domain . ".xml <br>";			// Uncomment for basic debugging
+		}
+		else {
+			# echo "Successfully wrote: " . DIRECTORYLOCATION . $domain . ".xml <br>";				// Uncomment for basic debugging
+		}
+		fclose($saveDirectory);																		// Close the file
 	}
-	else {
-		# echo "Successfully wrote: " . DIRECTORYLOCATION . $domain . ".xml <br>";				// Uncomment for basic debugging
+	else{
+		# echo "No users found for domain $domain <br>";											// Uncomment for basic debugging
 	}
-	fclose($saveDirectory);																		// Close the file
+
 
 }
 
