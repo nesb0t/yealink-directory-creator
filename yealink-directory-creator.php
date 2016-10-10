@@ -81,7 +81,7 @@ foreach($domains->domain as $key => $value) {  				// Look for the "domain" fiel
 ###################################################
 
 foreach ($domainArray as $key => $domain) {								// Loop through each item (domain) in the array, one at a time.
-	# echo "Domain: $value.<br>";										// Uncomment for basic debugging
+	# echo "Domain: $domain.<br>";										// Uncomment for basic debugging
 
 	set_time_limit(30);  												// Prevent PHP timeout while building the directories. Sets it to 30 seconds at the beginning of each loop.
 
