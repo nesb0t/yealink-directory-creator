@@ -1,6 +1,8 @@
 # XML Directory Creator for Yealink & Netsapiens
 This simple script was made to automatically generate XML directories for Yealink phones that are connected to the Netsapiens platform. It will automatically create a directory that includes the full name and extension for each user in a domain. It will output a different directory for each domain.
 
+This script is nearly identical to my [XML Enterprise Directory Creator](https://github.com/nesb0t/yealink-enterprise-directory-creator) which generates directories for all external contacts (aka company contacts or enterprise contacts) that a company wishes to share on all phones. The difference is this one generates directories for all internal users only.
+
 # Motivation
 While Netsapiens does have a directory creator, it doesn't work how I needed it to with Yealink phones. Users on our previous phone system were used to having a directory on the phone that listed all internal users, and we wanted to provide that same functionality on Netsapiens.
 
@@ -70,7 +72,7 @@ directory_setting.url="http://example.com/directory/favorite_setting.xml"
 Review Yealink documentation if you have any questions about this, and feel free to contact me if you're still stuck. With additional overrides you configure it so that it goes directly to this phonebook and disable the local phonebook entirely, as well as a few more things.
 
 # Troubleshooting
-- There are a number of items that start are commented out by the pound sign (#) rather than my usual //. These items will also have a trailing comment that reads "*// Uncomment for basic debugging*." If you are having trouble getting this to work, you can uncomment those lines as necessary to figure out where it may be failing. Just run the file from the command line or make it web-accessible in your local environment and access it from your web browser.
+- There are a number of items that are commented out by the pound sign (#) rather than my usual //. These items will also have a trailing comment that reads "*// Uncomment for basic debugging*." If you are having trouble getting this to work, you can uncomment those lines as necessary to figure out where it may be failing. Just run the file from the command line or make it web-accessible in your local environment and access it from your web browser.
 - You may contact me if you have any additional questions.
 
 # Tests
