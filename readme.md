@@ -9,38 +9,16 @@ While Netsapiens does have a directory creator, it doesn't work how I needed it 
 This type of feature was posted as a feature request on the Netsapiens forum ([#545](https://forum.netsapiens.com/t/link-contacts-in-web-portal-to-show-on-yealink-directory/545/)) so I decided to release this for all to use. **I have added a TON of comments to the code, and broken it up in to several sections to make it easy to read**. Even those with very little PHP experience should be able to modify this to work for you.
 
 # Important Note Before Using
-The #1 thing that is likely to cause people trouble is found on line #109:
+The #1 thing that is likely to cause people trouble is found on line #125:
 ```php
-if(isset($value->srv_code) && $value->srv_code == 'active-user') {
+if(isset($value->srv_code) && $value->srv_code == SRV_CODE)
 ```
-This line is doing two things to see if a user should be added to the directory. First it checks if there is any value in the srv_code field, and then it checks if that value is set to "active-user". If either of those are false, then the user will not be added. There are likely very few people here that won't have to change that in some way. If you don't change it, you will end up with completely blank directories. 
+This line is doing two things to see if a user should be added to the directory. First it checks if there is any value in the srv_code field, and then it checks if that value is set to "active-user". If either of those are false, then the user will not be added. I have it setup this way because our internal billing tool tracks billable users with the "active-user" service code, and we don't want non-billable users to show up in the directory. 
 
-I have it setup this way because our internal billing tool tracks billable users with the "active-user" service code, and we don't want non-billable users to show up in the directory. If you use a different service code for this type of thing then you can simply change "active-user" to whatever code you want to match on (which is why I left it in). If you do not use service codes at all then you must remove this line **and** the associated closing curly brace. If you don't remove both, you will have errors and the script won't run. Here is a before and after example to help if you must remove them.
+Ensure you read the setup instructions to get this part of the setup correct. You can easily change the service code it's looking for, or disable that feature altogether, but you must pick one or the other before things will work correctly. 
 
-**BEFORE:**
-```php
-109     if(isset($value->srv_code) && $value->srv_code == 'active-user'){
-110         if($value->dir_list == 'yes'){	
-111             $userList .= '<DirectoryEntry>'."\n";
-112             $userList .= '<Name>' . $value->first_name . " " . $value->last_name ."</Name> \n";
-113             $userList .= '<Telephone>' . $value->user . "</Telephone> \n";
-114             $userList .= '</DirectoryEntry>'."\n";
-115         }
-116     }
-```
-**AFTER:**
-```php
-109     
-110         if($value->dir_list == 'yes'){	
-111             $userList .= '<DirectoryEntry>'."\n";
-112             $userList .= '<Name>' . $value->first_name . " " . $value->last_name ."</Name> \n";
-113             $userList .= '<Telephone>' . $value->user . "</Telephone> \n";
-114             $userList .= '</DirectoryEntry>'."\n";
-115         
-116     }
-```
 # Installation and Usage
-1. Read the section above prior to contining, or you will probably have blank directories.
+1. Read the section above prior to continuing, or you will probably have blank directories.
 2. Open yealink-directory-creator.php in your favorite text editor (don't use Notepad) and make the necessary changes to the items found in the header. The actual file contains comments next to each item to help you out.
 ```php
 define("SERVER", "nms.example.com");
@@ -49,7 +27,10 @@ define("PASSWORD", "Strong-Password-Here");
 define("CLIENTID", "Example_API_User");
 define("CLIENTSECRET", "ExampleKey123");
 define("DIRECTORYLOCATION", "/var/www/html/example/");
+
+define("SRV_CODE", "example-service-code");
 ```
+  The last one in the list, SRV_CODE, is the one that was discussed above. If you use service codes then you can simply replace "example-service-code" with the code that corresponds to users you want in the directory. If you do not use service codes then comment this line out entirely, and it won't be used. If you leave the example in there, or enter a service code that you don't actually use, you will have blank directories. 
 3. Place yealink-directory-creator.php in a non-web-accessible folder on any server that has PHP available.
 4. Configure a cron job (Linux) or Scheduled Task (Windows) to run yealink-directory-creator.php automatically every hour (or however often you want).
 ```sh
@@ -87,6 +68,16 @@ Review Yealink documentation if you have any questions about this, and feel free
 
 # Contributors and Thanks
 - I used Chris Aaker's doCurl function from [here](https://github.com/aaker/domain-selfsignup). Thanks, Chris!
+
+# Version History
+v3.1.1 (current): 2016-10-10 @ 6:30pm EST
+- Moved the service code feature to the header section so it can be easily used or disabled without having to add or remove sections of code.
+- Added a user counter so that if a directory has 0 users, it won't even generate the directory. It was previously creating a blank one.
+- Added some additional "debugging" lines.
+- Added some details to the header section of the script, including version number, so that it's easy to know which one you have. 
+
+v3.1.0: 2016-10-10 @ 12:00pm EST
+- Initial release
 
 # Disclaimer
 I am not a developer by any means. I barely knew PHP when I started this. I can't promise that this won't cause any problems for you, up to and including your web server catching on fire. Use it at your own risk. You should test it on a sandbox before you use it on your production servers.
